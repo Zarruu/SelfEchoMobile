@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log History - SelfEcho</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 2rem;
+      text-align: center;
+    }
+    .log-btn {
+      background: #e0e7ff;
+      padding: 1rem;
+      margin: 1rem 0;
+      width: 80%;
+      border: 1px solid #999;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .log-btn:hover {
+      background: #a5b4fc;
+    }
+    #logDetailView {
+      margin-top: 2rem;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 1.5rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📚 Log History</h1>
+
+<div id="logList"></div>
+<div id="logDetailView"></div>
+
+<script>
+  function renderLogList() {
+    const logs = JSON.parse(localStorage.getItem('emoprompt_logs') || '[]');
+    const listContainer = document.getElementById('logList');
+    listContainer.innerHTML = '';
+
+    logs.forEach((log, index) => {
+      const btn = document.createElement('button');
+      btn.className = 'log-btn';
+      btn.textContent = log.timestamp;
+      btn.onclick = () => showLogDetail(index);
+      listContainer.appendChild(btn);
+    });
+  }
+
+    function showLogDetail(index) {
+     const logs = JSON.parse(localStorage.getItem('emoprompt_logs') || '[]');
+     const log = logs[index];
+     const detailContainer = document.getElementById('logDetailView');
+
+     let html = `<h3>${log.timestamp}</h3><hr>`;
+     log.answers.forEach((a, i) => {
+     html += `<p><strong>${a.question}</strong><br><em>Jawaban:</em> ${a.answer}</p>`;
+     });
+     html += `<p><strong>Rata-rata Emosi:</strong> ${log.averageEmotion}</p>`;
+
+     detailContainer.innerHTML = html;
+     detailContainer.style.display = 'block';
+     window.scrollTo(0, document.body.scrollHeight);
+    }
+
+
+  window.onload = renderLogList;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "positif": [
+    "senang", "bahagia", "lega", "tenang", "gembira", "semangat", "puas", "damai",
+    "syukur", "cerah", "menyenangkan", "hebat", "bangga", "tersenyum", "optimis"
+  ],
+  "negatif": [
+    "marah", "sedih", "kecewa", "takut", "khawatir", "frustasi", "lelah", "benci",
+    "bingung", "panik", "putus asa", "tertekan", "malas", "menangis", "kesal"
+  ],
+  "netral": [
+    "biasa", "netral", "diam", "datar", "stabil", "cukup", "normal", "rata", "lumayan",
+    "seadanya", "biasa-biasa", "tidak tahu", "entah", "ya begitu"
+  ]
+}

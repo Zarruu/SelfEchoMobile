@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Emotion Tracker Log - SelfEcho</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #f9f9f9; }
+    h1 { text-align: center; }
+    .log-btn { background: #e0e7ff; margin: 1rem 0; padding: 1rem; border: none; width: 100%; cursor: pointer; border-radius: 8px; }
+    .log-btn:hover { background: #a5b4fc; }
+    #logDetail { margin-top: 2rem; background: #fff; padding: 1rem; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>📋 Emotion Tracker Log</h1>
+<div id="logList"></div>
+<div id="logDetail"></div>
+
+<script>
+  function renderLogs() {
+    const logs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
+    const list = document.getElementById('logList');
+    list.innerHTML = '';
+    logs.forEach((log, index) => {
+      const btn = document.createElement('button');
+      btn.className = 'log-btn';
+      btn.textContent = `Sesi ${index + 1} - ${log.date}`;
+      btn.onclick = () => showDetail(index);
+      list.appendChild(btn);
+    });
+  }
+
+  function showDetail(index) {
+    const logs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
+    const log = logs[index];
+    const detail = document.getElementById('logDetail');
+    detail.innerHTML = `<h3>Detail Sesi - ${log.date}</h3><hr>`;
+    log.session.forEach(entry => {
+      detail.innerHTML += `<p><strong>${entry.sender === 'bot' ? 'Pertanyaan' : 'Jawaban'}:</strong> ${entry.text}</p>`;
+    });
+  }
+
+  window.onload = renderLogs;
+</script>
+
+</body>
+</html>

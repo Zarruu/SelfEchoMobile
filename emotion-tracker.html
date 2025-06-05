@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emotion Tracker - SelfEcho</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            primary: '#5A3392',
+            secondary: '#7C3AED',
+            light: '#F7F8FC',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .message {
+      animation: fadeIn 0.4s ease;
+    }
+    video {
+      transform: scaleX(-1);
+    }
+
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+<body class="font-poppins bg-light min-h-screen flex flex-col">
+  <!-- Navigation Bar -->
+  <nav class="bg-primary shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <a href="index.html" class="text-white text-xl font-semibold hover:text-gray-200">SelfEcho</a>
+        <div class="relative group">
+          <button class="flex items-center text-white hover:text-gray-200 focus:outline-none">
+            <span class="text-sm font-medium">Menu</span>
+            <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
+            <div class="py-1">
+              <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">About</a>
+              <a href="log-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log History</a>
+              <a href="emotion-tracker-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Emotion Tracker Log</a>
+              <a href="reset-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Reset Log</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold text-center text-primary mb-2">Emotion Tracker</h1>
+    <div id="moodStatus" class="text-lg font-semibold text-primary text-center mb-4">Mood Status: -</div>
+    
+    <!-- Chat Area -->
+    <div id="chat" class="flex-1 overflow-y-auto space-y-4 px-4 mb-20"></div>
+
+    <!-- Video Feed -->
+    <video id="video" class="fixed bottom-24 right-4 w-40 rounded-xl shadow-lg" autoplay muted playsinline></video>
+
+    <!-- Controls -->
+    <div id="controls" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+      <div class="max-w-4xl mx-auto flex gap-3">
+        <input type="text" 
+               id="input" 
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
+               placeholder="Ketik jawabanmu...">
+        <button onclick="sendMessage()" 
+                class="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-secondary transition-colors duration-200">
+          Kirim
+        </button>
+        <button onclick="endSession()" 
+                class="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200">
+          Akhiri Sesi
+        </button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const emotionQuestions = {
+    happy: ["Apa yang membuatmu tersenyum hari ini?", "Siapa yang ingin kamu rayakan bersama?"],
+    sad: ["Apa yang membuatmu merasa lebih baik?", "Siapa yang bisa kamu hubungi saat sedih?"],
+    angry: ["Apa yang biasanya membuatmu tenang?", "Bagaimana kamu mengelola kemarahanmu?"],
+    surprised: ["Kapan terakhir kamu terkejut?", "Apa hal mengejutkan yang pernah terjadi padamu?"],
+    disgusted: ["Bagaimana kamu menghindari situasi tidak nyaman?"],
+    fearful: ["Apa ketakutan terbesarmu yang ingin kamu hadapi?"],
+    neutral: ["Apa pikiranmu saat ini?", "Apa hal kecil yang kamu syukuri?"]
+  };
+
+  let chatLog = [];
+  let previousEmotion = "neutral";
+  let currentEmotion = "neutral";
+  let lastChangeTime = Date.now();
+
+  async function startVideo() {
+    await faceapi.nets.tinyFaceDetector.loadFromUri('./models');
+    await faceapi.nets.faceExpressionNet.loadFromUri('./models');
+
+    const moodStatus = document.getElementById('moodStatus');
+    const video = document.getElementById('video');
+    navigator.mediaDevices.getUserMedia({ video: {} })
+      .then(stream => video.srcObject = stream)
+      .catch(err => console.error(err));
+
+    video.addEventListener('play', () => {
+      setInterval(detectEmotion, 3000);
+    });
+  }
+
+  let lastQuestionTime = 0;
+  const MIN_QUESTION_INTERVAL = 20000;
+
+  async function detectEmotion() {
+    const video = document.getElementById('video');
+    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+
+    if (detections.length > 0) {
+      const exp = detections[0].expressions;
+      const topEmotion = Object.entries(exp).sort((a,b) => b[1] - a[1])[0][0];
+      currentEmotion = mapFaceAPIEmotion(topEmotion);
+      document.getElementById('moodStatus').innerText = `Mood Status: ${currentEmotion}`;
+
+      const now = Date.now();
+      if (currentEmotion !== previousEmotion && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
+        askQuestion(currentEmotion);
+        previousEmotion = currentEmotion;
+        lastChangeTime = now;
+        lastQuestionTime = now;
+      } else if (now - lastChangeTime > 30000 && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
+        askQuestion(currentEmotion);
+        lastChangeTime = now;
+        lastQuestionTime = now;
+      }
+    }
+  }
+
+  function mapFaceAPIEmotion(raw) {
+    const mapping = {
+      happy: 'happy',
+      sad: 'sad',
+      angry: 'angry',
+      surprised: 'surprised',
+      disgusted: 'disgusted',
+      fearful: 'fearful',
+      neutral: 'neutral'
+    };
+    return mapping[raw] || 'neutral';
+  }
+
+  function askQuestion(emotion) {
+    const questions = emotionQuestions[emotion];
+    if (questions && questions.length > 0) {
+      const question = questions[Math.floor(Math.random() * questions.length)];
+      addMessage('bot', question);
+    }
+  }
+
+  function addMessage(sender, text) {
+    const chat = document.getElementById('chat');
+    const msg = document.createElement('div');
+    if (sender === 'bot') {
+      msg.className = 'message max-w-[75%] self-start bg-gray-100 text-gray-800 p-4 rounded-2xl shadow-sm';
+    } else {
+      msg.className = 'message max-w-[75%] self-end bg-primary text-white p-4 rounded-2xl shadow-sm';
+    }
+    msg.textContent = text;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+    chatLog.push({ sender, text, timestamp: new Date().toLocaleTimeString() });
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('input');
+    const text = input.value.trim();
+    if (text) {
+      addMessage('user', text);
+      input.value = '';
+    }
+  }
+
+  function endSession() {
+    if (chatLog.length > 0) {
+      const savedChats = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
+      savedChats.push({ session: chatLog, date: new Date().toLocaleString() });
+      localStorage.setItem('emotion_tracker_logs', JSON.stringify(savedChats));
+      alert('Sesi telah disimpan!');
+      window.location.href = 'index.html';
+    } else {
+      alert('Belum ada interaksi!');
+    }
+  }
+
+  window.onload = startVideo;
+</script>
+
+</body>
+</html>

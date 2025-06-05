@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SelfEcho Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            primary: '#5A3392',
+            secondary: '#7C3AED',
+            light: '#F7F8FC',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-poppins bg-light min-h-screen">
+  
+
+  <!-- Navigation Bar -->
+  <nav class="bg-primary shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <span class="text-white text-xl font-semibold">SelfEcho</span>
+        <div class="relative group">
+          <button class="flex items-center text-white hover:text-gray-200 focus:outline-none">
+            <span class="text-sm font-medium">Menu</span>
+            <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
+            <div class="py-1">
+              <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">About</a>
+              <a href="log-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log History</a>
+              <a href="emotion-tracker-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Emotion Tracker Log</a>
+              <a href="reset-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Reset Log</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="bg-gradient-to-r from-primary to-secondary py-16">
+    <div class="max-w-7xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-white">Welcome to SelfEcho</h1>
+      <p class="mt-3 text-base sm:text-lg md:text-xl text-gray-100 max-w-2xl mx-auto">
+        Your personal space for reflection and growth
+      </p>
+      <div class="mt-6 flex justify-center space-x-4">
+        <a href="emotion-tracker.html" class="px-6 py-3 rounded-md bg-white text-primary font-semibold hover:bg-gray-100 shadow">
+          Emotion Tracker
+        </a>
+        <a href="questionnaire.html" class="px-6 py-3 rounded-md bg-white text-primary font-semibold hover:bg-gray-100 shadow">
+          Questionnaire
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 mt-12">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-gray-500 text-sm">&copy; 2025 SelfEcho. All rights reserved.</p>
+    </div>
+  </footer>
+
+   <script type="text/javascript" src="cordova.js"></script>
+
+    <script type="text/javascript">
+        // Lebih baik membungkus semua logika aplikasi dalam satu lingkup
+        // untuk menghindari polusi global.
+        const app = {
+            // Fungsi inisialisasi utama aplikasi Anda
+            initialize: function() {
+                // Tambahkan event listener untuk 'deviceready'
+                document.addEventListener('deviceready', this.onDeviceReady.bind(this), false);
+            },
+
+            // Event handler untuk 'deviceready'
+            onDeviceReady: function() {
+                console.log('Device is ready!');
+                console.log('Running cordova-' + cordova.platformId + '@' + cordova.version);
+
+                // Anda bisa memanggil fungsi-fungsi spesifik di sini.
+                this.checkCamera();
+                this.setupEventListeners(); // Misalnya, untuk tombol atau interaksi UI lainnya
+                this.startAppLogic();   // Memanggil logika utama aplikasi SelfEcho
+            },
+
+            // Contoh fungsi untuk memeriksa ketersediaan kamera
+            checkCamera: function() {
+                if (navigator.camera) {
+                    console.log('Cordova Camera API is available');
+                    // Anda bisa mengaktifkan fitur UI yang bergantung pada kamera di sini
+                } else {
+                    console.log('Cordova Camera API not available. WebRTC/getUserMedia might still work for video.');
+                    // Jika Anda menggunakan face-api.js dengan video stream dari browser,
+                    // itu mungkin masih berfungsi tanpa plugin kamera Cordova,
+                    // kecuali Anda memerlukan fitur spesifik dari plugin tersebut.
+                }
+            },
+
+            // Contoh fungsi untuk mengatur event listener UI
+            setupEventListeners: function() {
+                // Misalnya, jika Anda punya tombol di HTML:
+                // const myButton = document.getElementById('mySpecialButton');
+                // if (myButton) {
+                //     myButton.addEventListener('click', function() {
+                //         alert('Button clicked after deviceready!');
+                //     });
+                // }
+            },
+
+            // Fungsi untuk memulai logika inti dari aplikasi SelfEcho Anda
+            startAppLogic: function() {
+                console.log('Starting SelfEcho application logic...');
+                // Di sini Anda bisa:
+                // - Menginisialisasi komponen UI.
+                // - Memuat data awal jika diperlukan (misalnya, log dari localStorage).
+                // - Mengatur navigasi antar halaman jika aplikasi Anda Single Page Application (SPA)
+                //   atau mempersiapkan link antar halaman HTML.
+
+                // Untuk SelfEcho, jika setiap halaman HTML (index.html, questionnaire.html, dll.)
+                // memiliki logikanya sendiri, pastikan fungsi yang relevan dengan halaman saat ini
+                // dipanggil atau diinisialisasi di sini.
+                // Jika logika utama ada di file JS terpisah yang dimuat oleh setiap halaman,
+                // maka `deviceready` ini lebih untuk fungsionalitas global Cordova.
+
+                // Contoh untuk `emotion-tracker.html` yang menggunakan face-api.js:
+                // Jika face-api.js perlu diinisialisasi setelah `deviceready` untuk alasan tertentu
+                // (misalnya, plugin Cordova lain mempengaruhi pemuatan), Anda bisa melakukannya di sini.
+                // Namun, skrip `emotion-tracker.html` sudah memiliki `window.onload = startVideo;`
+                // yang mungkin sudah cukup untuk kasus penggunaan face-api.js saat ini.
+                // Anda perlu memastikan tidak ada konflik atau redundansi.
+
+                // Contoh untuk `questionnaire.html`:
+                // `window.onload = async () => { ... await loadEmotionKeywords(); ... setupQuestionForm(); ... }`
+                // juga sudah menangani inisialisasi halaman tersebut.
+
+                // Jadi, `startAppLogic` ini bisa fokus pada:
+                // 1. Pengaturan global Cordova (misalnya, status bar, splash screen jika Anda menambahkan pluginnya).
+                // 2. Navigasi default atau pemeriksaan status awal aplikasi.
+            }
+        };
+
+        // Panggil fungsi inisialisasi aplikasi Anda
+        app.initialize();
+    </script>
+
+</body>
+</html>

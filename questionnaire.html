@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire - SelfEcho</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            primary: '#5A3392',
+            secondary: '#7C3AED',
+            light: '#F7F8FC',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-poppins bg-light min-h-screen py-8 px-4">
+  <nav class="bg-primary shadow-lg fixed top-0 left-0 right-0 z-50">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex justify-between h-16 items-center">
+        <a href="index.html" class="text-white text-xl font-semibold hover:text-gray-200">SelfEcho</a>
+        <div class="relative group">
+          <button class="flex items-center text-white hover:text-gray-200 focus:outline-none">
+            <span class="text-sm font-medium">Menu</span>
+            <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
+            <div class="py-1">
+              <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">About</a>
+              <a href="log-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log History</a>
+              <a href="emotion-tracker-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Emotion Tracker Log</a>
+              <a href="reset-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Reset Log</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-3xl mx-auto mt-20 bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="p-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">🧠 Refleksi Emosi Teks</h2>
+      <form id="reflectionForm" class="space-y-6"></form>
+      <div class="flex flex-wrap gap-4 mt-6">
+        <button type="button" onclick="submitReflection()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">📝 Submit Refleksi</button>
+        <button type="button" onclick="renderLogList()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">📚 Log History</button>
+      </div>
+      <div id="emotionResult" class="mt-6 text-lg font-semibold text-center text-primary">Deteksi emosi: -</div>
+      <div id="logList" class="mt-8 space-y-2"></div>
+      <div id="logDetailView" class="mt-8 hidden border border-gray-200 rounded-lg p-6 bg-gray-50"></div>
+    </div>
+  </div>
+
+  <script>
+  // ===== KONFIGURASI & VARIABEL GLOBAL =====
+  const questionBank = [
+  // Kategori: Empati & Kepedulian
+  "Apa yang kamu rasakan ketika melihat seseorang menangis sendirian?",
+  "Bagaimana perasaanmu jika temanmu sedang sangat membutuhkan bantuan?",
+  "Apa reaksimu saat menyaksikan ketidakadilan terhadap orang lain?",
+  "Bagaimana perasaanmu saat mendengar berita tentang bencana alam?",
+  "Apa yang kamu rasakan jika melihat hewan peliharaan yang tampak sedih?",
+
+  // Kategori: Kehilangan & Kesedihan
+  "Bagaimana perasaanmu saat mengingat kenangan tentang seseorang yang telah tiada?",
+  "Apa yang kamu rasakan ketika sebuah harapan penting tidak tercapai?",
+  "Bagaimana kamu mengatasi perasaan sedih yang mendalam?",
+  "Apa yang membuatmu merasa paling kehilangan dalam hidup?",
+  "Ceritakan momen ketika kamu merasa sangat terpuruk karena kehilangan.",
+
+  // Kategori: Ketidakadilan & Kemarahan
+  "Apa yang membuatmu merasa sangat marah atau frustrasi?",
+  "Bagaimana reaksimu ketika seseorang mengambil keuntungan darimu?",
+  "Apa yang kamu rasakan saat dituduh melakukan sesuatu yang tidak kamu lakukan?",
+  "Bagaimana kamu biasanya mengekspresikan kemarahan?",
+  "Ceritakan situasi di mana kamu merasa diperlakukan tidak adil.",
+
+  // Kategori: Pengampunan & Kelegaan
+  "Bagaimana perasaanmu setelah berhasil memaafkan seseorang yang menyakitimu?",
+  "Apa yang kamu rasakan ketika seseorang yang kamu sakiti memaafkanmu?",
+  "Ceritakan momen ketika kamu merasa beban berat terangkat dari pundakmu.",
+  "Bagaimana rasanya melepaskan dendam atau amarah yang lama terpendam?",
+  "Apa arti pengampunan bagimu dan bagaimana itu memengaruhi emosimu?",
+
+  // Kategori: Keterasingan & Kecemasan
+  "Bagaimana perasaanmu saat berada di tengah keramaian namun merasa sendirian?",
+  "Apa yang paling kamu khawatirkan tentang masa depan?",
+  "Bagaimana reaksimu saat menghadapi situasi yang benar-benar baru dan tidak pasti?",
+  "Apa yang kamu rasakan ketika merasa tidak dipahami oleh orang lain?",
+  "Ceritakan pengalamanmu merasa cemas atau gugup secara berlebihan.",
+
+  // Kategori: Kegembiraan & Kebahagiaan
+  "Apa hal kecil yang bisa membuat harimu menjadi cerah seketika?",
+  "Ceritakan momen paling membahagiakan yang pernah kamu alami.",
+  "Bagaimana perasaanmu saat berhasil mencapai sesuatu yang kamu inginkan?",
+  "Apa yang membuatmu tertawa lepas akhir-akhir ini?",
+  "Siapa orang yang selalu bisa membuatmu tersenyum dan mengapa?",
+
+  // Kategori: Ketakutan & Kekhawatiran
+  "Apa ketakutan terbesarmu saat ini dan bagaimana kamu menghadapinya?",
+  "Bagaimana perasaanmu saat menonton film horor sendirian di malam hari?",
+  "Apa yang kamu khawatirkan akan terjadi jika kamu gagal dalam sesuatu?",
+  "Ceritakan situasi yang membuat jantungmu berdebar kencang karena takut.",
+  "Bagaimana kamu menenangkan diri saat merasa sangat khawatir?",
+
+  // Kategori: Kejutan & Kegembiraan (Positif)
+  "Bagaimana perasaanmu saat menerima kejutan yang menyenangkan?",
+  "Apa reaksimu ketika mendapatkan kabar baik yang tidak terduga?",
+  "Ceritakan pengalaman saat kamu merasa sangat antusias menunggu sesuatu.",
+  "Apa yang membuatmu merasa 'wow' atau takjub baru-baru ini?",
+  "Bagaimana rasanya ketika usahamu tiba-tiba membuahkan hasil yang luar biasa?",
+
+  // Kategori: Kesedihan & Kekecewaan (Ringan)
+  "Apa yang kamu rasakan ketika rencana yang sudah disusun rapi gagal?",
+  "Bagaimana perasaanmu jika seseorang melupakan hari ulang tahunmu?",
+  "Apa reaksimu saat tim favoritmu kalah dalam pertandingan penting?",
+  "Bagaimana kamu mengatasi rasa kecewa karena ekspektasi yang tidak terpenuhi?",
+  "Ceritakan momen ketika kamu merasa sedikit 'down' atau murung.",
+
+  // Kategori: Syukur & Apresiasi
+  "Sebutkan tiga hal yang kamu syukuri hari ini dan mengapa.",
+  "Bagaimana perasaanmu ketika seseorang menunjukkan apresiasi atas usahamu?",
+  "Apa hal sederhana dalam hidup yang sering kamu anggap remeh namun sebenarnya berharga?",
+  "Siapa orang yang paling kamu hargai dalam hidupmu dan mengapa?",
+  "Ceritakan momen ketika kamu merasa sangat bersyukur atas apa yang kamu miliki.",
+
+  // Kategori: Harapan & Optimisme
+  "Apa harapan terbesarmu untuk tahun ini?",
+  "Bagaimana kamu menjaga semangat dan optimisme di tengah kesulitan?",
+  "Apa yang membuatmu percaya bahwa masa depan akan lebih baik?",
+  "Ceritakan impian atau cita-cita yang membuatmu bersemangat setiap hari.",
+  "Bagaimana perasaanmu saat melihat secercah harapan dalam situasi yang sulit?",
+
+  // Kategori: Penyesalan & Rasa Bersalah
+  "Jika bisa kembali ke masa lalu, keputusan apa yang ingin kamu ubah dan mengapa?",
+  "Apa yang kamu rasakan ketika menyadari telah menyakiti perasaan seseorang?",
+  "Bagaimana kamu biasanya mengatasi perasaan bersalah?",
+  "Adakah hal yang kamu sesali karena tidak melakukannya?",
+  "Ceritakan pengalaman ketika kamu merasa sangat menyesal atas tindakanmu.",
+
+  // Kategori: Nostalgia & Kenangan
+  "Lagu apa yang bisa langsung membawamu kembali ke kenangan masa lalu? Perasaan apa yang muncul?",
+  "Tempat mana yang paling banyak menyimpan kenangan indah bagimu? Mengapa?",
+  "Bagaimana perasaanmu saat melihat foto-foto lama?",
+  "Kenangan masa kecil apa yang paling sering kamu ingat dan bagaimana rasanya?",
+  "Bau atau aroma apa yang bisa memicu kenangan kuat dan emosi tertentu?",
+
+  // Kategori: Pencapaian & Kebanggaan
+  "Pencapaian apa yang paling membuatmu bangga pada dirimu sendiri?",
+  "Bagaimana perasaanmu saat berhasil mengatasi tantangan besar?",
+  "Apa pujian yang paling berkesan yang pernah kamu terima dan bagaimana reaksimu?",
+  "Ceritakan momen ketika kamu merasa sangat kompeten dan mampu.",
+  "Bagaimana kamu merayakan keberhasilan atau pencapaianmu?",
+
+  // Kategori: Antisipasi & Penantian
+  "Apa yang kamu rasakan saat menantikan acara atau pertemuan penting?",
+  "Bagaimana perasaanmu sehari sebelum hari libur atau perjalanan yang kamu tunggu-tunggu?",
+  "Ceritakan pengalaman menantikan sesuatu yang sangat kamu inginkan.",
+  "Apakah kamu lebih sering merasa antusias atau cemas saat menanti sesuatu?",
+  "Bagaimana kamu mengisi waktu saat sedang menunggu kabar penting?",
+
+  // Kategori: Frustrasi & Kejengkelan
+  "Apa hal-hal kecil yang bisa membuatmu mudah merasa jengkel?",
+  "Bagaimana reaksimu ketika terjebak macet saat sedang terburu-buru?",
+  "Apa yang kamu rasakan saat teknologi tidak berfungsi sebagaimana mestinya?",
+  "Bagaimana kamu mengatasi rasa frustrasi saat menghadapi hambatan berulang?",
+  "Ceritakan situasi yang membuatmu ingin berteriak karena frustrasi.",
+
+  // Kategori: Kepuasan & Kedamaian
+  "Apa aktivitas yang bisa membuatmu merasa benar-benar tenang dan damai?",
+  "Bagaimana perasaanmu setelah menyelesaikan semua tugas penting tepat waktu?",
+  "Ceritakan momen ketika kamu merasa sangat puas dengan hasil kerjamu.",
+  "Di mana tempat yang bisa membuatmu merasa paling nyaman dan damai?",
+  "Apa yang kamu rasakan saat menikmati secangkir minuman hangat di hari yang dingin?",
+
+  // Kategori: Keingintahuan & Minat
+  "Topik atau hal apa yang saat ini paling menarik perhatianmu dan membuatmu penasaran?",
+  "Bagaimana perasaanmu saat menemukan informasi baru yang mengejutkan?",
+  "Apa yang kamu rasakan ketika memulai mempelajari keterampilan baru?",
+  "Ceritakan pengalaman saat kamu begitu asyik dengan sesuatu hingga lupa waktu.",
+  "Apa pertanyaan besar tentang kehidupan yang sering kamu pikirkan?",
+
+  // Kategori: Malu & Kegugupan Sosial
+  "Bagaimana perasaanmu saat harus berbicara di depan banyak orang?",
+  "Apa reaksimu ketika melakukan kesalahan kecil yang memalukan di depan umum?",
+  "Ceritakan pengalaman saat kamu merasa sangat canggung dalam situasi sosial.",
+  "Bagaimana kamu mengatasi rasa malu atau tidak percaya diri?",
+  "Apa yang kamu pikirkan tentang dirimu saat merasa gugup?",
+
+  // Kategori: Cinta & Kasih Sayang
+  "Apa yang kamu rasakan saat berada di dekat orang yang kamu cintai?",
+  "Bagaimana caramu menunjukkan kasih sayang kepada orang-orang terdekatmu?",
+  "Ceritakan momen ketika kamu merasa sangat dicintai dan dihargai.",
+  "Apa arti cinta sejati bagimu dan bagaimana itu memengaruhi emosimu?",
+  "Bagaimana perasaanmu ketika melihat pasangan yang saling menyayangi?"
+];
+
+  let sessionQuestions = [];
+  let emotionKeywords = {}; 
+
+  const emotionKeywordsPath = 'data/emotion_keywords.json'; // Path ini sudah benar
+
+  // ===== FUNGSI UTAMA =====
+
+  async function loadEmotionKeywords() {
+    try {
+      const response = await fetch(emotionKeywordsPath);
+      if (!response.ok) {
+        console.error(`Mencoba memuat dari: ${new URL(emotionKeywordsPath, window.location.href).href}`);
+        throw new Error(`Gagal memuat file: ${response.status} ${response.statusText}`);
+      }
+      emotionKeywords = await response.json();
+      console.log("Kata kunci emosi berhasil dimuat:", emotionKeywords);
+      return true;
+    } catch (error) {
+      console.error('Gagal memuat atau mem-parsing emotion_keywords.json:', error);
+      document.getElementById("emotionResult").textContent = "Error: Gagal memuat data emosi inti.";
+      return false;
+    }
+  }
+
+  // Fungsi loadQuestionBank() DIHAPUS
+
+  function setupQuestionForm() {
+    if (questionBank.length === 0) {
+        const form = document.getElementById("reflectionForm");
+        form.innerHTML = '<p class="text-lg text-gray-700 mb-6">🧘 Ini sesi refleksi emosimu. Jawab dengan jujur dari hati.</p>';
+        form.innerHTML += '<p class="text-red-500 font-semibold">Maaf, tidak ada pertanyaan yang dapat dimuat saat ini.</p>';
+        const submitButton = document.querySelector('button[onclick="submitReflection()"]');
+        if(submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Pertanyaan tidak tersedia';
+            submitButton.classList.add('bg-gray-400', 'hover:bg-gray-400', 'cursor-not-allowed');
+            submitButton.classList.remove('bg-primary', 'hover:bg-secondary');
+        }
+        return;
+    }
+
+    const numQuestionsToSelect = Math.min(5, questionBank.length);
+    sessionQuestions = questionBank.sort(() => 0.5 - Math.random()).slice(0, numQuestionsToSelect);
+    
+    const form = document.getElementById("reflectionForm");
+    form.innerHTML = '<p class="text-lg text-gray-700 mb-6">🧘 Ini sesi refleksi emosimu. Jawab dengan jujur dari hati.</p>';
+    
+    if (sessionQuestions.length === 0 && questionBank.length > 0) { // Seharusnya tidak terjadi jika numQuestionsToSelect > 0
+         form.innerHTML += '<p class="text-yellow-500 font-semibold">Tidak ada pertanyaan yang terpilih untuk sesi ini. Cek logika pemilihan pertanyaan.</p>';
+         return;
+    }
+
+    sessionQuestions.forEach((prompt, index) => {
+      const block = document.createElement("div");
+      block.className = "mb-6";
+      block.innerHTML = `
+        <label class="block text-gray-800 font-medium mb-2">${index + 1}. ${prompt}</label>
+        <textarea id="answer${index}" class="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></textarea>
+      `;
+      form.appendChild(block);
+    });
+  }
+
+  // Fungsi detectEmotion(text) TETAP SAMA
+  function detectEmotion(text) {
+    if (Object.keys(emotionKeywords).length === 0) {
+      console.warn("Peringatan: emotionKeywords kosong atau belum dimuat saat detectEmotion dipanggil.");
+      return "data emosi belum siap";
+    }
+    const scores = {};
+    for (const emoCategory in emotionKeywords) {
+      scores[emoCategory] = 0;
+    }
+    const words = text.toLowerCase().split(/\s+/);
+    for (const word of words) {
+      for (const emoCategory in emotionKeywords) {
+        if (emotionKeywords[emoCategory] && emotionKeywords[emoCategory].includes(word)) {
+          scores[emoCategory]++;
+        }
+      }
+    }
+    let detectedEmotion = "tidak terdeteksi";
+    let maxScore = 0;
+    for (const emoCategory in scores) {
+      if (scores[emoCategory] > maxScore) {
+        maxScore = scores[emoCategory];
+        detectedEmotion = emoCategory;
+      }
+    }
+    return maxScore > 0 ? detectedEmotion : "tidak terdeteksi";
+  }
+
+  // Fungsi submitReflection() TETAP SAMA (pastikan loop jawaban pakai sessionQuestions.length)
+  function submitReflection() {
+    if (Object.keys(emotionKeywords).length === 0) {
+      alert("Maaf, data emosi inti belum siap. Mohon tunggu sebentar atau muat ulang halaman.");
+      return;
+    }
+    if (sessionQuestions.length === 0) {
+        alert("Tidak ada pertanyaan untuk dijawab dalam sesi ini.");
+        return;
+    }
+    const answers = [];
+    const detailedAnswers = [];
+    for (let i = 0; i < sessionQuestions.length; i++) { 
+      const textarea = document.getElementById(`answer${i}`);
+      const text = textarea ? textarea.value : ""; 
+      answers.push(text);
+      detailedAnswers.push({ question: sessionQuestions[i] || "Pertanyaan tidak dimuat", answer: text });
+    }
+    const combinedText = answers.join(" ").trim();
+    let detectedEmotionText = "tidak terdeteksi";
+    if (combinedText.length > 0) {
+        detectedEmotionText = detectEmotion(combinedText);
+    } else {
+        detectedEmotionText = "tidak ada teks untuk dianalisis";
+    }
+    document.getElementById("emotionResult").textContent = "Deteksi emosi: " + detectedEmotionText;
+    const logEntry = {
+      timestamp: new Date().toLocaleString("id-ID", { dateStyle: 'medium', timeStyle: 'short' }),
+      answers: detailedAnswers,
+      averageEmotion: detectedEmotionText 
+    };
+    try {
+      const logs = JSON.parse(localStorage.getItem("emoprompt_logs") || "[]");
+      logs.push(logEntry);
+      localStorage.setItem("emoprompt_logs", JSON.stringify(logs));
+      alert("Refleksi berhasil disimpan!");
+      for (let i = 0; i < sessionQuestions.length; i++) {
+        const textarea = document.getElementById(`answer${i}`);
+        if (textarea) textarea.value = "";
+      }
+      document.getElementById("reflectionForm").scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+      console.error("Gagal menyimpan log ke localStorage:", error);
+      alert("Terjadi kesalahan saat menyimpan log. Silakan cek konsol.");
+    }
+  }
+
+  // Fungsi renderLogList() TETAP SAMA
+  function renderLogList() {
+    const logs = JSON.parse(localStorage.getItem("emoprompt_logs") || "[]");
+    const listContainer = document.getElementById("logList");
+    const detailContainer = document.getElementById("logDetailView");
+    listContainer.innerHTML = '<h3 class="text-xl font-semibold mb-4">📚 Log History</h3>';
+    detailContainer.style.display = 'none'; 
+    listContainer.style.display = 'block';
+    if (logs.length === 0) {
+      listContainer.innerHTML += '<p class="text-gray-600">Belum ada riwayat refleksi.</p>';
+      return;
+    }
+    const sortedLogs = logs.sort((a, b) => {
+        try {
+            return new Date(b.timestamp.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2})\.(\d{2})/, '$3-$2-$1T$4:$5:00')) - 
+                   new Date(a.timestamp.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2})\.(\d{2})/, '$3-$2-$1T$4:$5:00'));
+        } catch (e) { return 0; }
+    });
+    sortedLogs.forEach((log, index) => {
+      const btn = document.createElement('button');
+      btn.className = 'w-full text-left px-4 py-3 mb-2 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary';
+      btn.innerHTML = `<span class="block font-medium text-gray-700">${log.timestamp}</span><span class="block text-sm text-primary">${log.averageEmotion}</span>`;
+      const originalIndex = logs.indexOf(log); 
+      btn.onclick = () => showLogDetail(originalIndex);
+      listContainer.appendChild(btn);
+    });
+  }
+
+  // Fungsi showLogDetail(index) TETAP SAMA
+  function showLogDetail(index) {
+    const logs = JSON.parse(localStorage.getItem("emoprompt_logs") || "[]");
+    const log = logs[index]; 
+    if (!log) { console.error("Log tidak ditemukan untuk indeks:", index); return; }
+    const detailContainer = document.getElementById("logDetailView");
+    const listContainer = document.getElementById("logList");
+    let htmlContent = `<h3 class="text-xl font-semibold text-gray-800 mb-1">${log.timestamp}</h3>`;
+    htmlContent += `<p class="text-sm text-gray-500 mb-4">Emosi Terdeteksi: <span class="font-semibold text-primary">${log.averageEmotion}</span></p><hr class="mb-4">`;
+    log.answers.forEach((item, i) => {
+      htmlContent += `<div class="mb-4"><p class="font-medium text-gray-700">${i + 1}. ${item.question}</p><p class="text-gray-600 pl-4 italic">${item.answer || "(tidak dijawab)"}</p></div>`;
+    });
+    htmlContent += `<button type="button" onclick="document.getElementById('logDetailView').style.display='none'; document.getElementById('logList').style.display='block'; document.getElementById('logList').scrollIntoView({ behavior: 'smooth' });" class="mt-6 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Kembali ke Log History</button>`;
+    detailContainer.innerHTML = htmlContent;
+    listContainer.style.display = 'none';
+    detailContainer.style.display = 'block';
+    detailContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ===== INISIALISASI APLIKASI (DISESUAIKAN) =====
+  window.onload = async () => {
+    const submitButton = document.querySelector('button[onclick="submitReflection()"]');
+    const originalButtonText = submitButton.textContent;
+    const emotionResultDiv = document.getElementById("emotionResult");
+
+    submitButton.disabled = true;
+    submitButton.textContent = 'Memuat data...';
+    emotionResultDiv.textContent = 'Memuat data emosi...';
+    submitButton.classList.add('bg-gray-400', 'hover:bg-gray-400', 'cursor-not-allowed');
+    submitButton.classList.remove('bg-primary', 'hover:bg-secondary');
+
+    const keywordsLoaded = await loadEmotionKeywords();
+
+    if (keywordsLoaded) {
+      // Bank soal sudah ada, langsung setup form
+      setupQuestionForm(); 
+
+      // Cek apakah setupQuestionForm berhasil menyiapkan pertanyaan
+      if (sessionQuestions.length > 0) {
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+        submitButton.classList.remove('bg-gray-400', 'hover:bg-gray-400', 'cursor-not-allowed');
+        submitButton.classList.add('bg-primary', 'hover:bg-secondary');
+        emotionResultDiv.textContent = 'Deteksi emosi: -'; 
+      } else {
+        // Pesan error atau status sudah diatur oleh setupQuestionForm jika tidak ada pertanyaan
+        // Tombol submit juga sudah diatur oleh setupQuestionForm
+         if (questionBank.length === 0) {
+             emotionResultDiv.textContent = 'Tidak ada pertanyaan tersedia.';
+         } else {
+             emotionResultDiv.textContent = 'Tidak ada pertanyaan terpilih untuk sesi ini.';
+         }
+      }
+    } else {
+      // Gagal memuat keywords, pesan error sudah diatur oleh loadEmotionKeywords
+      submitButton.textContent = 'Gagal Memuat Data';
+      // Tombol submit tetap nonaktif
+    }
+  };
+</script>
+</body>
+</html>
