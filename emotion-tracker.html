@@ -80,6 +80,7 @@
     <video id="video" class="fixed bottom-24 right-4 w-40 rounded-xl shadow-lg" autoplay muted playsinline></video>
 
     <!-- Controls -->
+    <div id="suggestedChats" class="fixed bottom-28 left-0 right-0 max-w-4xl mx-auto flex gap-2 px-4 z-10"></div>
     <div id="controls" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
       <div class="max-w-4xl mx-auto flex gap-3">
         <input type="text" 
@@ -212,7 +213,59 @@
     }
   }
 
-  window.onload = startVideo;
+const customSentences = [
+  { text: "Aku sedih", emotion: "sad" },
+  { text: "Aku bahagia", emotion: "happy" },
+  { text: "Aku marah", emotion: "angry" },
+  { text: "Aku terkejut", emotion: "surprised" },
+  { text: "Aku jijik", emotion: "disgusted" },
+  { text: "Aku takut", emotion: "fearful" },
+  { text: "Aku biasa saja", emotion: "neutral" }
+];
+
+function getRandomSuggestions(count = 7) {
+  // Combine custom sentences and random questions
+  const allQuestions = Object.values(emotionQuestions).flat();
+  const shuffledQuestions = allQuestions.sort(() => 0.5 - Math.random());
+  const shuffledCustom = customSentences.sort(() => 0.5 - Math.random());
+  // Pick a mix of custom and random questions
+  const suggestions = [];
+  for (let i = 0; i < count; i++) {
+    if (i < shuffledCustom.length) {
+      suggestions.push(shuffledCustom[i]);
+    } else {
+      suggestions.push({ text: shuffledQuestions[i], emotion: null });
+    }
+  }
+  return suggestions;
+}
+
+function renderSuggestedChats() {
+  const container = document.getElementById('suggestedChats');
+  container.innerHTML = '';
+  const suggestions = getRandomSuggestions();
+  suggestions.forEach(suggestion => {
+    const btn = document.createElement('button');
+    btn.className = 'bg-gray-200 hover:bg-primary hover:text-white text-gray-700 px-3 py-2 rounded-lg text-sm transition-colors duration-200';
+    btn.textContent = suggestion.text;
+    btn.onclick = () => {
+  addMessage('user', suggestion.text);
+  if (suggestion.emotion) {
+    setTimeout(() => {
+      askQuestion(suggestion.emotion);
+    }, 800); // 800ms delay (less than 1 second)
+  }
+};
+    container.appendChild(btn);
+  });
+} 
+
+// Call this on load
+window.onload = function() {
+  startVideo();
+  renderSuggestedChats();
+};
+
 </script>
 
 </body>
