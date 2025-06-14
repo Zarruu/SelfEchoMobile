@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Laporan Emosi - SelfEcho</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            primary: '#5A3392',
+            secondary: '#7C3AED',
+            light: '#F7F8FC',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-poppins bg-light min-h-screen py-8 px-4">
+
+  <div id="report-content" class="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-8">
+    <h1 class="text-3xl font-bold text-center text-primary mb-6">📊 Laporan Emosi Gabungan</h1>
+    <p class="text-center text-gray-600 mb-8">Laporan ini menjumlahkan skor dari sesi Questionnaire dan Emotion Tracker terakhir Anda untuk memberikan gambaran emosi yang lebih utuh.</p>
+
+    <div class="grid md:grid-cols-2 gap-6 text-center">
+      <div class="bg-light p-6 rounded-lg">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">Skor Refleksi (Questionnaire)</h2>
+        <p id="questionnaireScore" class="text-4xl font-bold text-secondary">-</p>
+        <p id="questionnaireEmotion" class="text-gray-500 mt-1">(Belum ada data)</p>
+      </div>
+
+      <div class="bg-light p-6 rounded-lg">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">Rata-rata Skor (Emotion Tracker)</h2>
+        <p id="trackerScore" class="text-4xl font-bold text-secondary">-</p>
+        <p class="text-gray-500 mt-1">Berdasarkan deteksi wajah & chat</p>
+      </div>
+    </div>
+
+    <div class="mt-8 bg-primary text-white p-8 rounded-lg text-center">
+      <h2 class="text-2xl font-semibold mb-2">Total Skor Emosi Gabungan</h2>
+      <p id="totalScore" class="text-5xl font-bold mb-4">-</p>
+      <p id="totalScoreInterpretation" class="text-lg text-gray-200">Menunggu data...</p>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto text-center mt-8 flex flex-wrap justify-center gap-4">
+    <a href="index.html" class="px-6 py-3 rounded-md bg-white text-primary font-semibold hover:bg-gray-100 shadow">
+      Kembali ke Dashboard
+    </a>
+    <button onclick="downloadPDF()" class="px-6 py-3 rounded-md bg-green-500 text-white font-semibold hover:bg-green-600 shadow">
+      Unduh sebagai PDF
+    </button>
+  </div>
+
+<script>
+  // 4. FUNGSI BARU UNTUK MENGUNDUH PDF
+  function downloadPDF() {
+    const reportElement = document.getElementById('report-content');
+    
+    // Opsi untuk file PDF
+    const options = {
+      margin:       0.5,
+      filename:     'Laporan-Emosi-SelfEcho.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    // Tampilkan pesan saat proses dimulai
+    const downloadButton = document.querySelector('button[onclick="downloadPDF()"]');
+    downloadButton.textContent = 'Membuat PDF...';
+    downloadButton.disabled = true;
+
+    // Membuat dan mengunduh PDF
+    html2pdf().from(reportElement).set(options).save().then(() => {
+        // Kembalikan tombol ke keadaan semula setelah selesai
+        downloadButton.textContent = 'Unduh sebagai PDF';
+        downloadButton.disabled = false;
+    });
+  }
+
+  window.onload = function() {
+    let qScore = 0;
+    let tScore = 0;
+
+    // Ambil data dari Log Kuesioner (emoprompt_logs)
+    const questionnaireLogs = JSON.parse(localStorage.getItem('emoprompt_logs') || '[]');
+    if (questionnaireLogs.length > 0) {
+      const lastQLog = questionnaireLogs[questionnaireLogs.length - 1];
+      qScore = lastQLog.averageEmotionScore || 0;
+      document.getElementById('questionnaireScore').textContent = qScore;
+      document.getElementById('questionnaireEmotion').textContent = `Emosi: ${lastQLog.averageEmotion}`;
+    }
+
+    // Ambil data dari Log Emotion Tracker
+    const trackerLogs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
+    if (trackerLogs.length > 0) {
+      const lastTLog = trackerLogs[trackerLogs.length - 1];
+      tScore = parseFloat(lastTLog.averageScore) || 0;
+      document.getElementById('trackerScore').textContent = tScore.toFixed(2);
+    }
+    
+    // Hitung dan tampilkan total skor
+    const totalScore = qScore + tScore;
+    document.getElementById('totalScore').textContent = totalScore.toFixed(2);
+
+    // Berikan interpretasi sederhana
+    let interpretation = "Kondisi emosional Anda cenderung seimbang.";
+    if (totalScore > 0.5) {
+      interpretation = "Kondisi emosional Anda secara keseluruhan cenderung positif.";
+    } else if (totalScore < -0.5) {
+      interpretation = "Kondisi emosional Anda secara keseluruhan cenderung negatif.";
+    }
+    document.getElementById('totalScoreInterpretation').textContent = interpretation;
+  };
+</script>
+
+</body>
+</html>

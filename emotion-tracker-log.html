@@ -32,14 +32,23 @@
   }
 
   function showDetail(index) {
-    const logs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
-    const log = logs[index];
-    const detail = document.getElementById('logDetail');
-    detail.innerHTML = `<h3>Detail Sesi - ${log.date}</h3><hr>`;
-    log.session.forEach(entry => {
-      detail.innerHTML += `<p><strong>${entry.sender === 'bot' ? 'Pertanyaan' : 'Jawaban'}:</strong> ${entry.text}</p>`;
-    });
+  const logs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
+  const log = logs[index];
+  const detail = document.getElementById('logDetail');
+
+  let html = `<h3>Detail Sesi - ${log.date}</h3>`;
+  // Tampilkan skor rata-rata jika ada
+  if (log.averageScore !== undefined) {
+    html += `<p><strong>Rata-rata Skor Emosi:</strong> ${log.averageScore}</p>`;
   }
+  html += `<hr>`;
+
+  log.session.forEach(entry => {
+    html += `<p><strong>${entry.sender === 'bot' ? 'Pertanyaan' : 'Jawaban'}:</strong> ${entry.text}</p>`;
+  });
+
+  detail.innerHTML = html;
+}
 
   window.onload = renderLogs;
 </script>

@@ -33,33 +33,36 @@
     video {
       transform: scaleX(-1);
     }
-
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Style untuk scrollbar agar lebih minimalis */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #d1d5db;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
     }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
-<body class="font-poppins bg-light min-h-screen flex flex-col">
-  <!-- Navigation Bar -->
-  <nav class="bg-primary shadow-lg">
+<body class="font-poppins bg-light h-screen flex flex-col">
+  <nav class="bg-primary shadow-lg fixed top-0 left-0 right-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16 items-center">
         <a href="index.html" class="text-white text-xl font-semibold hover:text-gray-200">SelfEcho</a>
-        <div class="relative group">
-          <button class="flex items-center text-white hover:text-gray-200 focus:outline-none">
-            <span class="text-sm font-medium">Menu</span>
-            <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
+        <div class="relative">
+          <button id="burger-btn" class="p-2 rounded-md text-white hover:text-gray-200 hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+            <span class="sr-only">Open main menu</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
-          <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
+          <div id="mobile-menu" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-50">
             <div class="py-1">
               <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">About</a>
               <a href="log-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log History</a>
               <a href="emotion-tracker-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Emotion Tracker Log</a>
+              <a href="laporan-emosi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Laporan Emosi</a>
               <a href="reset-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Reset Log</a>
             </div>
           </div>
@@ -68,38 +71,48 @@
     </div>
   </nav>
 
-  <!-- Main Content -->
-  <div class="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 py-6">
-    <h1 class="text-2xl font-bold text-center text-primary mb-2">Emotion Tracker</h1>
-    <div id="moodStatus" class="text-lg font-semibold text-primary text-center mb-4">Mood Status: -</div>
-    
-    <!-- Chat Area -->
-    <div id="chat" class="flex-1 overflow-y-auto space-y-4 px-4 mb-20"></div>
-
-    <!-- Video Feed -->
-    <video id="video" class="fixed bottom-24 right-4 w-40 rounded-xl shadow-lg" autoplay muted playsinline></video>
-
-    <!-- Controls -->
-    <div id="suggestedChats" class="fixed bottom-28 left-0 right-0 max-w-4xl mx-auto flex gap-2 px-4 z-10"></div>
-    <div id="controls" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
-      <div class="max-w-4xl mx-auto flex gap-3">
-        <input type="text" 
-               id="input" 
-               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
-               placeholder="Ketik jawabanmu...">
-        <button onclick="sendMessage()" 
-                class="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-secondary transition-colors duration-200">
-          Kirim
-        </button>
-        <button onclick="endSession()" 
-                class="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200">
-          Akhiri Sesi
-        </button>
+  <main class="flex-1 flex flex-row pt-16">
+    <div class="w-1/3 bg-white shadow-lg p-4 flex flex-col">
+      <h2 class="text-xl font-bold text-primary mb-4 text-center border-b pb-2">Log Emosi Sesi Ini</h2>
+      <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <table class="w-full text-sm text-left text-gray-600">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+            <tr>
+              <th scope="col" class="py-3 px-6">Mood</th>
+              <th scope="col" class="py-3 px-6">Waktu</th>
+            </tr>
+          </thead>
+          <tbody id="emotion-log-table-body">
+            </tbody>
+        </table>
       </div>
     </div>
-  </div>
+
+    <div class="w-2/3 flex flex-col p-4">
+      <div class="flex-1 flex flex-col max-w-4xl w-full mx-auto">
+        <h1 class="text-2xl font-bold text-center text-primary mb-2">Emotion Tracker</h1>
+        <div id="moodStatus" class="text-lg font-semibold text-primary text-center mb-4">Mood Status: -</div>
+        
+        <div id="chat" class="flex-1 overflow-y-auto space-y-4 px-4 pb-4 custom-scrollbar"></div>
+
+        <video id="video" class="fixed bottom-24 right-4 w-40 rounded-xl shadow-lg z-20" autoplay muted playsinline></video>
+
+        <div class="mt-auto bg-light pt-2">
+          <div id="suggestedChats" class="flex gap-2 px-4 z-10 overflow-x-auto pb-2"></div>
+          <div id="controls" class="bg-white border-t border-gray-200 p-4 shadow-lg rounded-lg">
+            <div class="flex gap-3">
+              <input type="text" id="input" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Ketik jawabanmu...">
+              <button onclick="sendMessage()" class="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-secondary">Kirim</button>
+              <button onclick="endSession()" class="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200">Akhiri Sesi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 
 <script>
+  // ... (Variabel global Anda yang lain tetap sama) ...
   const emotionQuestions = {
     happy: ["Apa yang membuatmu tersenyum hari ini?", "Siapa yang ingin kamu rayakan bersama?"],
     sad: ["Apa yang membuatmu merasa lebih baik?", "Siapa yang bisa kamu hubungi saat sedih?"],
@@ -109,32 +122,70 @@
     fearful: ["Apa ketakutan terbesarmu yang ingin kamu hadapi?"],
     neutral: ["Apa pikiranmu saat ini?", "Apa hal kecil yang kamu syukuri?"]
   };
-
+  const emotionScores = { happy: 1, surprised: 1, neutral: 0, sad: -1, angry: -1, disgusted: -1, fearful: -1 };
+  let sessionEmotionScores = [];
   let chatLog = [];
   let previousEmotion = "neutral";
   let currentEmotion = "neutral";
   let lastChangeTime = Date.now();
+  let lastQuestionTime = 0;
+  const MIN_QUESTION_INTERVAL = 2000;
 
-  async function startVideo() {
-    await faceapi.nets.tinyFaceDetector.loadFromUri('./models');
-    await faceapi.nets.faceExpressionNet.loadFromUri('./models');
-
-    const moodStatus = document.getElementById('moodStatus');
-    const video = document.getElementById('video');
-    navigator.mediaDevices.getUserMedia({ video: {} })
-      .then(stream => video.srcObject = stream)
-      .catch(err => console.error(err));
-
-    video.addEventListener('play', () => {
-      setInterval(detectEmotion, 3000);
-    });
+  // FUNGSI BARU: Menambahkan log ke tabel di panel kiri
+  function addEmotionToLogTable(emotion, time) {
+    const tableBody = document.getElementById('emotion-log-table-body');
+    const newRow = document.createElement('tr');
+    newRow.className = 'bg-white border-b hover:bg-gray-50';
+    
+    newRow.innerHTML = `
+      <td class="py-2 px-6 font-medium text-gray-900">${emotion}</td>
+      <td class="py-2 px-6">${time}</td>
+    `;
+    
+    // prepend() agar log baru muncul di paling atas
+    tableBody.prepend(newRow);
   }
 
-  let lastQuestionTime = 0;
-  const MIN_QUESTION_INTERVAL = 20000;
+  // Fungsi startVideo() sama seperti versi perbaikan sebelumnya
+  async function startVideo() {
+    const moodStatus = document.getElementById('moodStatus');
+    const video = document.getElementById('video');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        moodStatus.textContent = "Error: Browser Anda tidak mendukung akses kamera.";
+        return;
+    }
+    moodStatus.textContent = "Mood Status: Memuat model AI...";
+    try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri('./models');
+        await faceapi.nets.faceExpressionNet.loadFromUri('./models');
+    } catch (modelError) {
+        moodStatus.textContent = "Error: Gagal memuat model AI.";
+        return;
+    }
+    moodStatus.textContent = "Mood Status: Meminta izin kamera...";
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.addEventListener('play', () => {
+            moodStatus.textContent = "Mood Status: -";
+            setInterval(detectEmotion, 3000);
+        });
+    } catch (err) {
+        console.error("Gagal mengakses kamera:", err);
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+            moodStatus.textContent = "Error: Izin akses kamera ditolak.";
+        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+            moodStatus.textContent = "Error: Tidak ada kamera yang ditemukan.";
+        } else {
+            moodStatus.textContent = "Error: Terjadi masalah saat mengakses kamera.";
+        }
+    }
+  }
 
   async function detectEmotion() {
     const video = document.getElementById('video');
+    if (!video.srcObject) return;
+    
     const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
 
     if (detections.length > 0) {
@@ -143,41 +194,39 @@
       currentEmotion = mapFaceAPIEmotion(topEmotion);
       document.getElementById('moodStatus').innerText = `Mood Status: ${currentEmotion}`;
 
+      addEmotionToLogTable(currentEmotion, new Date().toLocaleTimeString('id-ID'));
+      
+      const score = emotionScores[currentEmotion] || 0;
+      sessionEmotionScores.push(score);
+      
       const now = Date.now();
+      // Kondisi 1: Jika emosi berubah
       if (currentEmotion !== previousEmotion && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
         askQuestion(currentEmotion);
         previousEmotion = currentEmotion;
-        lastChangeTime = now;
+        lastChangeTime = now; // Timer untuk 'perubahan' di-reset di sini
         lastQuestionTime = now;
-      } else if (now - lastChangeTime > 30000 && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
+      } 
+      // Kondisi 2: Jika emosi tetap sama selama 30 detik
+      else if (now - lastChangeTime > 30000 && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
         askQuestion(currentEmotion);
-        lastChangeTime = now;
-        lastQuestionTime = now;
+        // lastChangeTime = now; <-- INI ADALAH BARIS PENYEBAB BUG YANG SUDAH DIHAPUS
+        lastQuestionTime = now; // Kita hanya reset timer pertanyaan, bukan timer perubahan
       }
     }
   }
 
-  function mapFaceAPIEmotion(raw) {
-    const mapping = {
-      happy: 'happy',
-      sad: 'sad',
-      angry: 'angry',
-      surprised: 'surprised',
-      disgusted: 'disgusted',
-      fearful: 'fearful',
-      neutral: 'neutral'
-    };
-    return mapping[raw] || 'neutral';
-  }
+  function mapFaceAPIEmotion(raw) { return raw; }
 
   function askQuestion(emotion) {
     const questions = emotionQuestions[emotion];
     if (questions && questions.length > 0) {
-      const question = questions[Math.floor(Math.random() * questions.length)];
-      addMessage('bot', question);
+        const question = questions[Math.floor(Math.random() * questions.length)];
+        addMessage('bot', question);
     }
-  }
-
+}
+  
+  // ... (fungsi addMessage, sendMessage, endSession tetap sama) ...
   function addMessage(sender, text) {
     const chat = document.getElementById('chat');
     const msg = document.createElement('div');
@@ -203,69 +252,74 @@
 
   function endSession() {
     if (chatLog.length > 0) {
-      const savedChats = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
-      savedChats.push({ session: chatLog, date: new Date().toLocaleString() });
-      localStorage.setItem('emotion_tracker_logs', JSON.stringify(savedChats));
-      alert('Sesi telah disimpan!');
+      let averageScore = 0;
+      if (sessionEmotionScores.length > 0) {
+        const sum = sessionEmotionScores.reduce((total, score) => total + score, 0);
+        averageScore = sum / sessionEmotionScores.length;
+      }
+      const logEntry = {
+        session: chatLog,
+        date: new Date().toLocaleString("id-ID"),
+        detectedEmotions: sessionEmotionScores,
+        averageScore: averageScore.toFixed(2)
+      };
+      const savedLogs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
+      savedLogs.push(logEntry);
+      localStorage.setItem('emotion_tracker_logs', JSON.stringify(savedLogs));
+      alert('Sesi telah disimpan! Rata-rata skor emosi sesi ini: ' + logEntry.averageScore);
       window.location.href = 'index.html';
     } else {
       alert('Belum ada interaksi!');
     }
   }
 
-const customSentences = [
-  { text: "Aku sedih", emotion: "sad" },
-  { text: "Aku bahagia", emotion: "happy" },
-  { text: "Aku marah", emotion: "angry" },
-  { text: "Aku terkejut", emotion: "surprised" },
-  { text: "Aku jijik", emotion: "disgusted" },
-  { text: "Aku takut", emotion: "fearful" },
-  { text: "Aku biasa saja", emotion: "neutral" }
-];
+  const customSentences = [
+    { text: "Aku sedih", emotion: "sad" }, { text: "Aku bahagia", emotion: "happy" },
+    { text: "Aku marah", emotion: "angry" }, { text: "Aku terkejut", emotion: "surprised" },
+    { text: "Aku jijik", emotion: "disgusted" }, { text: "Aku takut", emotion: "fearful" },
+    { text: "Aku biasa saja", emotion: "neutral" }
+  ];
 
-function getRandomSuggestions(count = 7) {
-  // Combine custom sentences and random questions
-  const allQuestions = Object.values(emotionQuestions).flat();
-  const shuffledQuestions = allQuestions.sort(() => 0.5 - Math.random());
-  const shuffledCustom = customSentences.sort(() => 0.5 - Math.random());
-  // Pick a mix of custom and random questions
-  const suggestions = [];
-  for (let i = 0; i < count; i++) {
-    if (i < shuffledCustom.length) {
-      suggestions.push(shuffledCustom[i]);
-    } else {
-      suggestions.push({ text: shuffledQuestions[i], emotion: null });
-    }
+  function getRandomSuggestions(count = 7) {
+    return [...customSentences].sort(() => 0.5 - Math.random()).slice(0, count);
   }
-  return suggestions;
-}
 
-function renderSuggestedChats() {
-  const container = document.getElementById('suggestedChats');
-  container.innerHTML = '';
-  const suggestions = getRandomSuggestions();
-  suggestions.forEach(suggestion => {
-    const btn = document.createElement('button');
-    btn.className = 'bg-gray-200 hover:bg-primary hover:text-white text-gray-700 px-3 py-2 rounded-lg text-sm transition-colors duration-200';
-    btn.textContent = suggestion.text;
-    btn.onclick = () => {
-  addMessage('user', suggestion.text);
-  if (suggestion.emotion) {
-    setTimeout(() => {
-      askQuestion(suggestion.emotion);
-    }, 800); // 800ms delay (less than 1 second)
-  }
-};
-    container.appendChild(btn);
-  });
-} 
+  function renderSuggestedChats() {
+    const container = document.getElementById('suggestedChats');
+    container.innerHTML = '';
+    const suggestions = getRandomSuggestions();
+    suggestions.forEach(suggestion => {
+      const btn = document.createElement('button');
+      btn.className = 'flex-shrink-0 bg-gray-200 hover:bg-primary hover:text-white text-gray-700 px-3 py-2 rounded-lg text-sm';
+      btn.textContent = suggestion.text;
+      btn.onclick = () => {
+        addMessage('user', suggestion.text);
+        if (suggestion.emotion) {
+          // PANGGIL FUNGSI BARU untuk update tabel log
+          addEmotionToLogTable(suggestion.emotion, new Date().toLocaleTimeString('id-ID'));
+          
+          const score = emotionScores[suggestion.emotion] || 0;
+          sessionEmotionScores.push(score);
+          setTimeout(() => { askQuestion(suggestion.emotion); }, 800);
+        }
+      };
+      container.appendChild(btn);
+    });
+  } 
 
-// Call this on load
-window.onload = function() {
-  startVideo();
-  renderSuggestedChats();
-};
-
+  // Inisialisasi Burger Menu dan Aplikasi
+  window.onload = function() {
+    const burgerBtn = document.getElementById('burger-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    burgerBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+    window.addEventListener('click', (e) => {
+      if (!burgerBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+        mobileMenu.classList.add('hidden');
+      }
+    });
+    startVideo();
+    renderSuggestedChats();
+  };
 </script>
 
 </body>
