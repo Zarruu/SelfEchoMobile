@@ -44,7 +44,8 @@
   html += `<hr>`;
 
   log.session.forEach(entry => {
-    html += `<p><strong>${entry.sender === 'bot' ? 'Pertanyaan' : 'Jawaban'}:</strong> ${entry.text}</p>`;
+    // PERUBAHAN ADA DI BARIS DI BAWAH INI
+    html += `<p><strong>${entry.sender === 'bot' ? 'EchoBot' : 'User'}:</strong> ${entry.text}</p>`;
   });
 
   detail.innerHTML = html;
