@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Laporan Tren Emosi - SelfEcho</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            primary: '#5A3392',
+            secondary: '#7C3AED',
+            light: '#F7F8FC',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-poppins bg-light min-h-screen">
+
+  <nav class="bg-primary shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <a href="index.html" class="text-white text-xl font-semibold hover:text-gray-200">SelfEcho</a>
+        <div class="relative">
+          <button id="burger-btn" class="p-2 rounded-md text-white hover:text-gray-200 hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+            <span class="sr-only">Open main menu</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          <div id="mobile-menu" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-50">
+            <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+               <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">About</a>
+               <a href="log-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Log History</a>
+               <a href="emotion-tracker-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Emotion Tracker Log</a>
+               <a href="laporan-emosi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Laporan Emosi</a>
+               <a href="tren-emosi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Laporan Tren</a>
+               <a href="reset-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Reset Log</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-primary">Laporan Tren Emosi</h1>
+      <p class="mt-2 text-lg text-gray-600">Visualisasi data emosional Anda selama 7 hari terakhir.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div class="bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-2xl font-semibold text-center text-gray-800 mb-4">Distribusi Emosi (Tracker)</h2>
+        <div id="trackerChartContainer" class="min-h-[350px] flex justify-center items-center">
+            <canvas id="emotionTrackerChart"></canvas>
+            <p id="noTrackerData" class="text-gray-500 hidden">Belum ada data dari Emotion Tracker dalam 7 hari terakhir.</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-2xl font-semibold text-center text-gray-800 mb-4">Distribusi Emosi (Kuesioner)</h2>
+         <div id="qChartContainer" class="min-h-[350px] flex justify-center items-center">
+            <canvas id="questionnaireChart"></canvas>
+            <p id="noQData" class="text-gray-500 hidden">Belum ada data dari Kuesioner dalam 7 hari terakhir.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+// Kode untuk diletakkan di dalam <script> di tren-emosi.html
+
+// Fungsi untuk navigasi mobile (hamburger menu)
+const burgerBtn = document.getElementById('burger-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+burgerBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+window.addEventListener('click', (e) => {
+    if (!burgerBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+        mobileMenu.classList.add('hidden');
+    }
+});
+
+
+// Fungsi utama yang dijalankan saat halaman dimuat
+window.onload = function() {
+    // 1. Proses data dari Emotion Tracker
+    processTrackerData();
+    // 2. Proses data dari Questionnaire
+    processQuestionnaireData();
+};
+
+// Fungsi untuk mengubah string tanggal "dd/mm/yyyy, hh.mm" menjadi objek Date
+function parseDate(dateString) {
+    // Contoh: "24/06/2025, 21.30"
+    const parts = dateString.split(', ');
+    const dateParts = parts[0].split('/');
+    const timeParts = parts[1].split('.');
+    // Format: YYYY, MM (0-11), DD, HH, MM
+    return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1]);
+}
+
+
+function processTrackerData() {
+    const logs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Filter log untuk 7 hari terakhir dan kumpulkan semua emosi
+    const recentEmotions = logs
+        .filter(log => parseDate(log.date) >= sevenDaysAgo)
+        .flatMap(log => log.detectedEmotions.map(score => {
+            // Konversi skor kembali ke nama emosi (sesuai definisi di emotion-tracker.html)
+            if (score === 1) return 'happy/surprised';
+            if (score === 0) return 'neutral';
+            if (score === -1) return 'sad/angry/fearful/disgusted';
+            return 'unknown';
+        }));
+
+    if (recentEmotions.length === 0) {
+        document.getElementById('noTrackerData').classList.remove('hidden');
+        document.getElementById('emotionTrackerChart').classList.add('hidden');
+        return;
+    }
+
+    // Hitung frekuensi setiap emosi
+    const emotionCounts = recentEmotions.reduce((acc, emotion) => {
+        acc[emotion] = (acc[emotion] || 0) + 1;
+        return acc;
+    }, {});
+
+    // Siapkan data untuk grafik
+    const labels = Object.keys(emotionCounts);
+    const data = Object.values(emotionCounts);
+    
+    // Render grafik
+    renderPieChart('emotionTrackerChart', labels, data, 'Emosi dari Tracker');
+}
+
+function processQuestionnaireData() {
+    const logs = JSON.parse(localStorage.getItem('emoprompt_logs') || '[]');
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // FUNGSI PARSING BARU YANG BISA MEMBACA "24 Jun 2025"
+    const parseQuestionnaireDate = (timestamp) => {
+        const months = {
+            'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'Mei': 4, 'Jun': 5,
+            'Jul': 6, 'Ags': 7, 'Sep': 8, 'Okt': 9, 'Nov': 10, 'Des': 11
+        };
+        // Contoh: "24 Jun 2025, 22.15"
+        const [datePart, timePart] = timestamp.split(', '); // -> ["24 Jun 2025", "22.15"]
+        const [day, monthStr, year] = datePart.split(' '); // -> ["24", "Jun", "2025"]
+        const [hour, minute] = timePart.split('.'); // -> ["22", "15"]
+        
+        const month = months[monthStr];
+        if (month === undefined) return null; // Gagal parse jika bulan tidak ditemukan
+
+        return new Date(year, month, day, hour, minute);
+    };
+
+    const recentEmotions = logs
+        .filter(log => {
+            const logDate = parseQuestionnaireDate(log.timestamp);
+            return logDate && logDate >= sevenDaysAgo; // Filter data yang berhasil di-parse dan masuk rentang waktu
+        })
+        .map(log => log.averageEmotion);
+
+    if (recentEmotions.length === 0) {
+        document.getElementById('noQData').classList.remove('hidden');
+        document.getElementById('questionnaireChart').classList.add('hidden');
+        return;
+    }
+
+    const emotionCounts = recentEmotions.reduce((acc, emotion) => {
+        acc[emotion] = (acc[emotion] || 0) + 1;
+        return acc;
+    }, {});
+
+    const labels = Object.keys(emotionCounts);
+    const data = Object.values(emotionCounts);
+
+    renderBarChart('questionnaireChart', labels, data, 'Emosi dari Kuesioner');
+}
+
+
+function renderPieChart(canvasId, labels, data, title) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: title,
+                data: data,
+                backgroundColor: [
+                    'rgba(255, 205, 86, 0.7)',
+                    'rgba(201, 203, 207, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                ],
+                borderColor: [
+                    'rgb(255, 205, 86)',
+                    'rgb(201, 203, 207)',
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+        }
+    });
+}
+
+function renderBarChart(canvasId, labels, data, title) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: title,
+                data: data,
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(201, 203, 207, 0.7)'
+                ],
+                borderColor: [
+                    'rgb(75, 192, 192)',
+                    'rgb(255, 99, 132)',
+                    'rgb(201, 203, 207)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}  </script>
+</body>
+</html>

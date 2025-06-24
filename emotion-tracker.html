@@ -51,11 +51,10 @@
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body class="font-poppins bg-light h-screen flex flex-col">
-  <div id="welcomePopup" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[100] hidden">
+ <div id="welcomePopup" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[100] hidden">
   <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all" style="animation: fadeIn 0.3s ease-out;">
     <h2 class="text-2xl font-bold text-primary mb-4 text-center">Selamat Datang di Emotion Tracker!</h2>
     <p class="text-gray-600 mb-6 text-center">Berikut panduan singkat untuk menggunakan fitur ini:</p>
-    
     <ul class="list-none space-y-3 text-gray-700">
       <li class="flex items-start">
         <span class="text-green-500 mr-3 mt-1">✔</span>
@@ -74,10 +73,33 @@
         <span><strong>Akhiri Sesi:</strong> Jika sudah selesai, klik tombol "Akhiri Sesi" untuk menyimpan ringkasan sesi Anda.</span>
       </li>
     </ul>
-
     <div class="text-center mt-8">
       <button onclick="closeWelcomePopup()" class="px-8 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
         Saya Mengerti
+      </button>
+    </div>
+  </div>
+</div> <div id="breathingExercisePopup" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] hidden">
+  <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4 text-center">
+    <h2 class="text-2xl font-bold text-primary mb-4">Latihan Pernapasan Singkat</h2>
+    <p class="text-gray-600 mb-8">Ikuti ritme 4-7-8 untuk membantu menenangkan pikiran dan tubuh Anda.</p>
+    <div class="space-y-6 text-xl">
+        <div class="p-4 bg-blue-100 text-blue-800 rounded-lg">
+            <p class="font-semibold">Tarik Napas melalui hidung</p>
+            <p class="text-3xl font-bold">4 detik</p>
+        </div>
+        <div class="p-4 bg-purple-100 text-purple-800 rounded-lg">
+            <p class="font-semibold">Tahan Napas</p>
+            <p class="text-3xl font-bold">7 detik</p>
+        </div>
+        <div class="p-4 bg-green-100 text-green-800 rounded-lg">
+            <p class="font-semibold">Hembuskan Napas perlahan</p>
+            <p class="text-3xl font-bold">8 detik</p>
+        </div>
+    </div>
+    <div class="mt-8">
+      <button onclick="closeBreathingPopup()" class="px-8 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-secondary">
+        Selesai
       </button>
     </div>
   </div>
@@ -94,6 +116,7 @@
           <div id="mobile-menu" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-50">
             <div class="py-1">
               <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">About</a>
+              <a href="tren-emosi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Laporan Tren</a>
               <a href="log-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log History</a>
               <a href="emotion-tracker-log.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Emotion Tracker Log</a>
               <a href="laporan-emosi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Laporan Emosi</a>
@@ -166,6 +189,7 @@
   let lastChangeTime = Date.now();
   let lastQuestionTime = 0;
   const MIN_QUESTION_INTERVAL = 10000;
+  let isWaitingForAnswer = false; 
 
   // Tambahkan dua fungsi ini di dalam <script>
 
@@ -235,13 +259,14 @@ function closeWelcomePopup() {
       sessionDetectedEmotions.push(currentEmotion);
       updateEmotionBar();
       sessionEmotionScores.push(emotionScores[currentEmotion] || 0);
-      const now = Date.now();
-      if (currentEmotion !== previousEmotion && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
+       const now = Date.now();
+      // Tambahkan kondisi '&& !isWaitingForAnswer' di kedua blok if
+      if (currentEmotion !== previousEmotion && now - lastQuestionTime > MIN_QUESTION_INTERVAL && !isWaitingForAnswer) {
         askQuestion(currentEmotion);
         previousEmotion = currentEmotion;
         lastChangeTime = now;
         lastQuestionTime = now;
-      } else if (now - lastChangeTime > 30000 && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
+      } else if (now - lastChangeTime > 30000 && now - lastQuestionTime > MIN_QUESTION_INTERVAL && !isWaitingForAnswer) {
         askQuestion(currentEmotion);
         lastQuestionTime = now;
       }
@@ -255,6 +280,8 @@ function closeWelcomePopup() {
     if (questions && questions.length > 0) {
         const question = questions[Math.floor(Math.random() * questions.length)];
         addMessage('bot', question);
+        isWaitingForAnswer = true;
+
     }
   }
 
@@ -319,29 +346,93 @@ function closeWelcomePopup() {
         }
     }
     function addMessage(sender, text) {
-        const chat = document.getElementById('chat');
-        const msg = document.createElement('div');
-        if (sender === 'bot') {
-        msg.className = 'message max-w-[75%] self-start bg-gray-100 text-gray-800 p-4 rounded-2xl shadow-sm';
-        } else {
-        msg.className = 'message max-w-[75%] self-end bg-primary text-white p-4 rounded-2xl shadow-sm';
-        }
-        msg.textContent = text;
-        chat.appendChild(msg);
-        chat.scrollTop = chat.scrollHeight;
-        chatLog.push({ sender, text, timestamp: new Date().toLocaleTimeString() });
+    const chat = document.getElementById('chat');
+    const msg = document.createElement('div');
+    if (sender === 'bot') {
+      msg.className = 'message max-w-[75%] self-start bg-gray-100 text-gray-800 p-4 rounded-2xl shadow-sm';
+    } else {
+      msg.className = 'message max-w-[75%] self-end bg-primary text-white p-4 rounded-2xl shadow-sm';
     }
+    msg.innerHTML = text; // <-- UBAH MENJADI .innerHTML
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+    chatLog.push({ sender, text, timestamp: new Date().toLocaleTimeString() });
+}
     function sendMessage() {
     const input = document.getElementById('input');
     const text = input.value.trim();
     if (text) {
+      // Saat pengguna menjawab, set status kembali menjadi 'tidak menunggu'
+      isWaitingForAnswer = false; 
+
       addMessage('user', text);
       input.value = '';
+      const botReply = getBotResponse(text);
       setTimeout(() => {
-        addMessage('bot', 'Baik, terima kasih atas jawabanmu. Refleksimu sudah tersimpan.');
-      }, 800);
+        addMessage('bot', botReply);
+      }, 800); 
     }
+}
+
+  function getBotResponse(userText) {
+  const text = userText.toLowerCase(); // Ubah ke huruf kecil agar tidak case-sensitive
+
+  // Respons untuk emosi negatif
+   if (text.includes('sedih') || text.includes('kecewa') || text.includes('menangis') || text.includes('sulit') || text.includes('marah') || text.includes('kesal') || text.includes('frustrasi')) {
+    const responses = [
+      "Aku turut merasakan apa yang kamu rasakan. Terkadang, menarik napas dalam bisa membantu. <button onclick='showBreathingPopup()' class='mt-2 text-sm text-blue-600 underline'>Mau coba latihan pernapasan?</button>",
+      "Terima kasih sudah berbagi. Jika terasa berat, mari kita berhenti sejenak dan atur napas. <button onclick='showBreathingPopup()' class='mt-2 text-sm text-blue-600 underline'>Coba latihan pernapasan.</button>",
+      "Perasaan itu valid. Mengatur napas bisa membantu menenangkan sistem saraf kita. <button onclick='showBreathingPopup()' class='mt-2 text-sm text-blue-600 underline'>Klik di sini untuk panduan singkat.</button>"
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
   }
+
+  // Respons untuk emosi positif
+  if (text.includes('senang') || text.includes('bahagia') || text.includes('gembira') || text.includes('bersyukur')) {
+    const responses = [
+      "Senang mendengarnya! Semoga perasaan baik ini terus menyertaimu.",
+      "Luar biasa! Ikut bahagia untukmu. Terus sebarkan energi positifmu.",
+      "Itu adalah hal yang indah untuk dirasakan. Terima kasih sudah berbagi kebahagiaanmu."
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  }
+
+  // Respons untuk emosi marah atau frustrasi
+  if (text.includes('marah') || text.includes('kesal') || text.includes('benci') || text.includes('frustrasi')) {
+    const responses = [
+      "Aku mengerti perasaan itu bisa sangat kuat. Ambil napas dalam-dalam sejenak.",
+      "Tidak apa-apa untuk merasa marah. Yang penting adalah bagaimana kita meresponsnya.",
+      "Biarkan perasaan itu mengalir. Menulisnya di sini adalah langkah awal yang baik."
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  }
+
+  // Respons default jika tidak ada kata kunci yang cocok
+  const defaultResponses = [
+    "Terima kasih atas refleksimu. Setiap pemikiranmu sangat berharga.",
+    "Aku mengerti. Terima kasih sudah mau terbuka dan berbagi.",
+    "Itu adalah poin yang menarik. Terima kasih sudah mengungkapkannya.",
+    "Oke, aku simpan refleksimu. Teruslah jujur pada perasaanmu."
+  ];
+  return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+}
+
+// Tambahkan dua fungsi ini di dalam <script>
+
+function showBreathingPopup() {
+    const popup = document.getElementById('breathingExercisePopup');
+    if (popup) {
+        popup.classList.remove('hidden');
+    }
+}
+
+function closeBreathingPopup() {
+    const popup = document.getElementById('breathingExercisePopup');
+    if (popup) {
+        popup.classList.add('hidden');
+    }
+}
+
     function endSession() {
         if (chatLog.length > 0) {
         let averageScore = 0;
