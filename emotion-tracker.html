@@ -33,7 +33,6 @@
     video {
       transform: scaleX(-1);
     }
-    /* Style untuk scrollbar agar lebih minimalis */
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
     }
@@ -44,11 +43,46 @@
     .custom-scrollbar::-webkit-scrollbar-track {
       background: transparent;
     }
+    /* KUNCI UTAMA: Memastikan body dan html mengisi seluruh tinggi layar */
+    html, body {
+      height: 100%;
+    }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body class="font-poppins bg-light h-screen flex flex-col">
-  <nav class="bg-primary shadow-lg fixed top-0 left-0 right-0 z-50">
+  <div id="welcomePopup" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[100] hidden">
+  <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all" style="animation: fadeIn 0.3s ease-out;">
+    <h2 class="text-2xl font-bold text-primary mb-4 text-center">Selamat Datang di Emotion Tracker!</h2>
+    <p class="text-gray-600 mb-6 text-center">Berikut panduan singkat untuk menggunakan fitur ini:</p>
+    
+    <ul class="list-none space-y-3 text-gray-700">
+      <li class="flex items-start">
+        <span class="text-green-500 mr-3 mt-1">✔</span>
+        <span><strong>Deteksi Wajah:</strong> Pastikan wajah Anda terlihat di video kecil. Aplikasi akan mendeteksi emosi Anda secara otomatis.</span>
+      </li>
+      <li class="flex items-start">
+        <span class="text-green-500 mr-3 mt-1">✔</span>
+        <span><strong>Interaksi Chat:</strong> Jawab pertanyaan dari EchoBot atau gunakan saran chat untuk merefleksikan perasaan Anda.</span>
+      </li>
+      <li class="flex items-start">
+        <span class="text-green-500 mr-3 mt-1">✔</span>
+        <span><strong>Log Emosi:</strong> Setiap emosi yang terdeteksi (dari wajah atau chat) akan tercatat di tabel samping.</span>
+      </li>
+       <li class="flex items-start">
+        <span class="text-green-500 mr-3 mt-1">✔</span>
+        <span><strong>Akhiri Sesi:</strong> Jika sudah selesai, klik tombol "Akhiri Sesi" untuk menyimpan ringkasan sesi Anda.</span>
+      </li>
+    </ul>
+
+    <div class="text-center mt-8">
+      <button onclick="closeWelcomePopup()" class="px-8 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+        Saya Mengerti
+      </button>
+    </div>
+  </div>
+</div>
+  <nav class="bg-primary shadow-lg z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16 items-center">
         <a href="index.html" class="text-white text-xl font-semibold hover:text-gray-200">SelfEcho</a>
@@ -71,8 +105,15 @@
     </div>
   </nav>
 
-  <main class="flex-1 flex flex-row pt-16">
+  <main class="flex-1 flex flex-row overflow-hidden">
     <div class="w-1/3 bg-white shadow-lg p-4 flex flex-col">
+      
+      <video id="video" 
+             class="w-full aspect-video rounded-xl mb-4 bg-gray-200" 
+             autoplay 
+             muted 
+             playsinline>
+      </video>
       <h2 class="text-xl font-bold text-primary mb-4 text-center border-b pb-2">Log Emosi Sesi Ini</h2>
       <div class="flex-grow overflow-y-auto custom-scrollbar">
         <table class="w-full text-sm text-left text-gray-600">
@@ -88,23 +129,18 @@
       </div>
       <div class="mt-4 pt-4 border-t">
           <h3 class="text-lg font-bold text-primary mb-3 text-center">Dominasi Emosi</h3>
-          <div id="emotion-bar-container" class="w-full h-8 flex rounded-full overflow-hidden bg-gray-200">
-              </div>
-          <div id="emotion-legend" class="mt-3 flex flex-wrap gap-x-4 gap-y-2 justify-center text-xs">
-              </div>
+          <div id="emotion-bar-container" class="w-full h-8 flex rounded-full overflow-hidden bg-gray-200"></div>
+          <div id="emotion-legend" class="mt-3 flex flex-wrap gap-x-4 gap-y-2 justify-center text-xs"></div>
       </div>
     </div>
 
     <div class="w-2/3 flex flex-col p-4">
-      <div class="flex-1 flex flex-col max-w-4xl w-full mx-auto">
         <h1 class="text-2xl font-bold text-center text-primary mb-2">Emotion Tracker</h1>
         <div id="moodStatus" class="text-lg font-semibold text-primary text-center mb-4">Mood Status: -</div>
         
         <div id="chat" class="flex-1 overflow-y-auto space-y-4 px-4 pb-4 custom-scrollbar"></div>
 
-        <video id="video" class="fixed bottom-24 right-4 w-40 rounded-xl shadow-lg z-20" autoplay muted playsinline></video>
-
-        <div class="mt-auto bg-light pt-2">
+        <div class="bg-light pt-2">
           <div id="suggestedChats" class="flex gap-2 px-4 z-10 overflow-x-auto pb-2"></div>
           <div id="controls" class="bg-white border-t border-gray-200 p-4 shadow-lg rounded-lg">
             <div class="flex gap-3">
@@ -114,55 +150,63 @@
             </div>
           </div>
         </div>
-      </div>
     </div>
-  </main>
+</main>
 
 <script>
+  // KODE JAVASCRIPT ANDA TIDAK PERLU DIUBAH
   const emotionQuestions = { happy: ["Apa yang membuatmu tersenyum hari ini?", "Siapa yang ingin kamu rayakan bersama?"], sad: ["Apa yang membuatmu merasa lebih baik?", "Siapa yang bisa kamu hubungi saat sedih?"], angry: ["Apa yang biasanya membuatmu tenang?", "Bagaimana kamu mengelola kemarahanmu?"], surprised: ["Kapan terakhir kamu terkejut?", "Apa hal mengejutkan yang pernah terjadi padamu?"], disgusted: ["Bagaimana kamu menghindari situasi tidak nyaman?"], fearful: ["Apa ketakutan terbesarmu yang ingin kamu hadapi?"], neutral: ["Apa pikiranmu saat ini?", "Apa hal kecil yang kamu syukuri?"] };
   const emotionScores = { happy: 1, surprised: 1, neutral: 0, sad: -1, angry: -1, disgusted: -1, fearful: -1 };
-  
-  // ================================================================
-  //      VARIABEL BARU UNTUK FITUR BAR DITAMBAHKAN DI SINI
-  // ================================================================
   const emotionColors = { happy: '#facc15', sad: '#3b82f6', angry: '#ef4444', surprised: '#a855f7', neutral: '#9ca3af', fearful: '#1f2937', disgusted: '#84cc16' };
-  let sessionDetectedEmotions = []; // Menyimpan NAMA emosi untuk kalkulasi bar
-
+  let sessionDetectedEmotions = [];
   let sessionEmotionScores = [];
   let chatLog = [];
   let previousEmotion = "neutral";
   let currentEmotion = "neutral";
   let lastChangeTime = Date.now();
   let lastQuestionTime = 0;
-  const MIN_QUESTION_INTERVAL = 10000; // Jeda 10 detik agar tidak spam
+  const MIN_QUESTION_INTERVAL = 10000;
 
-  // ================================================================
-  //      FUNGSI BARU UNTUK UPDATE BAR DITAMBAHKAN DI SINI
-  // ================================================================
+  // Tambahkan dua fungsi ini di dalam <script>
+
+function showWelcomePopup() {
+    // Cek apakah popup sudah pernah ditampilkan di sesi ini
+    if (!sessionStorage.getItem('welcomePopupShown')) {
+        const popup = document.getElementById('welcomePopup');
+        if (popup) {
+            popup.classList.remove('hidden');
+        }
+    }
+}
+
+function closeWelcomePopup() {
+    const popup = document.getElementById('welcomePopup');
+    if (popup) {
+        popup.classList.add('hidden');
+        // Tandai bahwa popup sudah ditampilkan di sesi ini
+        sessionStorage.setItem('welcomePopupShown', 'true');
+    }
+}
+
   function updateEmotionBar() {
       const barContainer = document.getElementById('emotion-bar-container');
       const legendContainer = document.getElementById('emotion-legend');
       barContainer.innerHTML = '';
       legendContainer.innerHTML = '';
-
       const totalDetections = sessionDetectedEmotions.length;
       if (totalDetections === 0) return;
-
       const emotionCounts = sessionDetectedEmotions.reduce((acc, emotion) => {
           acc[emotion] = (acc[emotion] || 0) + 1;
           return acc;
       }, {});
-
       for (const emotion in emotionCounts) {
           const count = emotionCounts[emotion];
           const percentage = (count / totalDetections) * 100;
-          
           const segment = document.createElement('div');
           segment.style.width = `${percentage}%`;
           segment.style.backgroundColor = emotionColors[emotion] || '#cccccc';
           segment.title = `${emotion}: ${percentage.toFixed(1)}%`;
           barContainer.appendChild(segment);
-
           const legendItem = document.createElement('div');
           legendItem.className = 'flex items-center';
           legendItem.innerHTML = `<span class="h-3 w-3 rounded-full mr-1.5" style="background-color: ${emotionColors[emotion] || '#cccccc'}"></span><span>${emotion} (${percentage.toFixed(0)}%)</span>`;
@@ -178,8 +222,6 @@
     tableBody.prepend(newRow);
   }
 
-  async function startVideo() { /* ... (Tidak ada perubahan di sini) ... */ }
-
   async function detectEmotion() {
     const video = document.getElementById('video');
     if (!video.srcObject) return;
@@ -189,17 +231,10 @@
       const topEmotion = Object.entries(exp).sort((a,b) => b[1] - a[1])[0][0];
       currentEmotion = mapFaceAPIEmotion(topEmotion);
       document.getElementById('moodStatus').innerText = `Mood Status: ${currentEmotion}`;
-
       addEmotionToLogTable(currentEmotion, new Date().toLocaleTimeString('id-ID'));
-      
-      // ================================================================
-      //      LOGIKA BARU DITAMBAHKAN DI SINI
-      // ================================================================
       sessionDetectedEmotions.push(currentEmotion);
       updateEmotionBar();
-      
       sessionEmotionScores.push(emotionScores[currentEmotion] || 0);
-      
       const now = Date.now();
       if (currentEmotion !== previousEmotion && now - lastQuestionTime > MIN_QUESTION_INTERVAL) {
         askQuestion(currentEmotion);
@@ -223,10 +258,6 @@
     }
   }
 
-  function addMessage(sender, text) { /* ... (Tidak ada perubahan di sini) ... */ }
-  function sendMessage() { /* ... (Tidak ada perubahan di sini) ... */ }
-  function endSession() { /* ... (Tidak ada perubahan di sini) ... */ }
-  
   const customSentences = [ { text: "Aku sedih", emotion: "sad" }, { text: "Aku bahagia", emotion: "happy" }, { text: "Aku marah", emotion: "angry" }, { text: "Aku terkejut", emotion: "surprised" }, { text: "Aku jijik", emotion: "disgusted" }, { text: "Aku takut", emotion: "fearful" }, { text: "Aku biasa saja", emotion: "neutral" } ];
 
   function getRandomSuggestions(count = 7) { return [...customSentences].sort(() => 0.5 - Math.random()).slice(0, count); }
@@ -243,13 +274,8 @@
         addMessage('user', suggestion.text);
         if (suggestion.emotion) {
           addEmotionToLogTable(suggestion.emotion, new Date().toLocaleTimeString('id-ID'));
-          
-          // ================================================================
-          //      LOGIKA BARU DITAMBAHKAN DI SINI
-          // ================================================================
           sessionDetectedEmotions.push(suggestion.emotion);
           updateEmotionBar();
-
           sessionEmotionScores.push(emotionScores[suggestion.emotion] || 0);
           setTimeout(() => { askQuestion(suggestion.emotion); }, 800);
         }
@@ -258,13 +284,6 @@
     });
   } 
 
-  window.onload = function() { /* ... (Tidak ada perubahan di sini, sudah lengkap) ... */ };
-  
-  // NOTE: Saya meringkas beberapa fungsi yang tidak berubah dalam komentar untuk menghemat ruang,
-  // namun kode lengkap di atas sudah mencakup semua yang diperlukan.
-</script>
-
-<script>
     async function startVideo() {
         const moodStatus = document.getElementById('moodStatus');
         const video = document.getElementById('video');
@@ -318,11 +337,9 @@
     if (text) {
       addMessage('user', text);
       input.value = '';
-
-      // BARIS BARU: Tambahkan respons dari bot setelah jeda singkat
       setTimeout(() => {
         addMessage('bot', 'Baik, terima kasih atas jawabanmu. Refleksimu sudah tersimpan.');
-      }, 800); // Jeda 800 milidetik (0.8 detik) agar terasa alami
+      }, 800);
     }
   }
     function endSession() {
@@ -335,7 +352,7 @@
         const logEntry = {
             session: chatLog,
             date: new Date().toLocaleString("id-ID"),
-            detectedEmotions: sessionEmotionScores, // Catatan: ini masih menyimpan skor, bukan nama emosi
+            detectedEmotions: sessionEmotionScores,
             averageScore: averageScore.toFixed(2)
         };
         const savedLogs = JSON.parse(localStorage.getItem('emotion_tracker_logs') || '[]');
@@ -358,6 +375,24 @@
         });
         startVideo();
         renderSuggestedChats();
+        showWelcomePopup(); 
+
+
+        // 1. Ambil elemen input berdasarkan ID-nya
+    const inputField = document.getElementById('input');
+
+    // 2. Tambahkan 'event listener' untuk mendeteksi penekanan tombol
+    inputField.addEventListener('keydown', function(event) {
+        // 3. Cek apakah tombol yang ditekan adalah "Enter"
+        if (event.key === 'Enter') {
+            
+            // Mencegah perilaku default 'Enter' (seperti membuat baris baru)
+            event.preventDefault(); 
+            
+            // 4. Panggil fungsi sendMessage(), sama seperti saat tombol 'Kirim' diklik
+            sendMessage();
+        }
+    });
   };
 </script>
 </body>
